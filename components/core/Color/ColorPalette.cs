@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using RgbColor = System.Drawing.Color;
+using AntDesign.core.Color.TinyColor;
 
 namespace AntDesign.Core
 {
@@ -157,10 +157,10 @@ namespace AntDesign.Core
         private static RgbColor Mix(RgbColor rgb1, RgbColor rgb2, int amount)
         {
             var p = amount / 100;
-            var rgb = RgbColor.FromArgb(
-                red: (rgb2.R - rgb1.R) * p + rgb1.R,
-                green: (rgb2.G - rgb1.G) * p + rgb1.G,
-                blue: (rgb2.B - rgb1.B) * p + rgb1.B
+            var rgb = new RgbColor(
+                R: (rgb2.R - rgb1.R) * p + rgb1.R,
+                G: (rgb2.G - rgb1.G) * p + rgb1.G,
+                B: (rgb2.B - rgb1.B) * p + rgb1.B
                );
 
             return rgb;
@@ -226,86 +226,183 @@ namespace AntDesign.Core
 
         private static HSVColor RgbToHsv(RgbColor color)
         {
-            HSVColor toReturn = new HSVColor();
-
-            int max = Math.Max(color.R, Math.Max(color.G, color.B));
-            int min = Math.Min(color.R, Math.Min(color.G, color.B));
-
-            toReturn.H = Math.Round(color.GetHue(), 2);
-            toReturn.S = ((max == 0) ? 0 : 1d - (1d * min / max)) * 100;
-            toReturn.S = Math.Round(toReturn.S, 2);
-            toReturn.V = Math.Round(((max / 255d) * 100), 2);
-
-            return toReturn;
+            return HSVColor.FromRgb(color);
         }
 
-        private static string RgbToHex(RgbColor color)
+        private static string RgbToHex(RgbColor color, bool allow3Char = false)
         {
-            return $"#{color.Name[2..]}";
+            return color.ToHexString(allow3Char);
         }
 
         private static RgbColor InputToRgb(string hex)
         {
-            return RgbColor.FromArgb(
-                 int.Parse(hex[1..3], NumberStyles.AllowHexSpecifier),
-                 int.Parse(hex[3..5], NumberStyles.AllowHexSpecifier),
-                 int.Parse(hex[5..], NumberStyles.AllowHexSpecifier)
-                );
+            return RgbColor.FromHex(hex);
         }
 
         private static RgbColor InputToRgb(HSVColor hsv)
         {
-            static RgbColor Rgb(double r, double g, double b) =>
-                RgbColor.FromArgb(Clamp((int)(r * 255.0)), Clamp((int)(g * 255.0)), Clamp((int)(b * 255.0))); ;
-
-            if (hsv.V <= 0)
-            {
-                return Rgb(0, 0, 0);
-            }
-            else if (hsv.S <= 0)
-            {
-                return Rgb(hsv.V, hsv.V, hsv.V);
-            }
-            else
-            {
-                double h = hsv.H;
-                while (h < 0) { h += 360; };
-                while (h >= 360) { h -= 360; };
-
-                double hf = h / 60.0;
-                int i = (int)Math.Floor(hf);
-                double f = hf - i;
-                double pv = hsv.V * (1 - hsv.S);
-                double qv = hsv.V * (1 - hsv.S * f);
-                double tv = hsv.V * (1 - hsv.S * (1 - f));
-                return i switch
-                {
-                    0 => Rgb(hsv.V, tv, pv),
-                    1 => Rgb(qv, hsv.V, pv),
-                    2 => Rgb(pv, hsv.V, tv),
-                    3 => Rgb(pv, qv, hsv.V),
-                    4 => Rgb(tv, pv, hsv.V),
-                    5 => Rgb(hsv.V, pv, qv),
-                    6 => Rgb(hsv.V, tv, pv),
-                    -1 => Rgb(hsv.V, pv, qv),
-                    _ => Rgb(hsv.V, hsv.V, hsv.V),
-                };
-            }
-        }
-
-        private static int Clamp(int i)
-        {
-            if (i < 0) return 0;
-            if (i > 255) return 255;
-            return i;
+            return hsv.ToRgb();
         }
     }
 
-    public struct HSVColor
+    public record struct RgbColor(double R, double G, double B)
     {
-        public double H { get; set; }
-        public double S { get; set; }
-        public double V { get; set; }
+        public static RgbColor FromHex(string hex)
+        {
+            return new(
+                int.Parse(hex[1..3], NumberStyles.AllowHexSpecifier),
+                int.Parse(hex[3..5], NumberStyles.AllowHexSpecifier),
+                int.Parse(hex[5..], NumberStyles.AllowHexSpecifier)
+               );
+        }
+
+        public string ToHex(bool allow3Char = false)
+        {
+            var hex = new[]
+            {
+                ((int)Math.Round(R)).ToString("X").PadLeft(2,'0'),
+                ((int)Math.Round(G)).ToString("X").PadLeft(2,'0'),
+                ((int)Math.Round(B)).ToString("X").PadLeft(2,'0'),
+            };
+
+            // Return a 3 character hex if possible
+            if (allow3Char && hex[0][0] == hex[0][1] && hex[1][0] == hex[1][1] && hex[2][0] == hex[2][1])
+            {
+                return $"{hex[0][0]}{hex[1][0]}{hex[2][0]}".ToLowerInvariant();
+            }
+
+            return $"{hex[0]}{hex[1]}{hex[2]}".ToLowerInvariant();
+        }
+
+        public string ToHexString(bool allow3Char = false)
+        {
+            return $"#{ToHex(allow3Char)}";
+        }
+    }
+
+    public record struct HSVColor(double H, double S, double V)
+    {
+        public RgbColor ToRgb()
+        {
+            double h = TinyColor.Bound01(H, 360) * 6;
+            double s = TinyColor.Bound01(S, 100);
+            double v = TinyColor.Bound01(V, 100);
+
+            double i = Math.Floor(h),
+            f = h - i,
+            p = v * (1 - s),
+            q = v * (1 - f * s),
+            t = v * (1 - (1 - f) * s),
+            mod = i % 6,
+            r = new[] { v, q, p, p, t, v }[(int)mod],
+            g = new[] { t, v, v, q, p, p }[(int)mod],
+            b = new[] { p, p, t, v, v, q }[(int)mod];
+
+            return new(r * 255, g * 255, b * 255);
+        }
+
+        public static HSVColor FromRgb(RgbColor color)
+        {
+            double r = TinyColor.Bound01(color.R, 255);
+            double g = TinyColor.Bound01(color.G, 255);
+            double b = TinyColor.Bound01(color.B, 255);
+
+            var max = new[] { r, g, b }.Max();
+            var min = new[] { r, g, b }.Min();
+            double h, s, v = max;
+
+            var d = max - min;
+            s = max == 0 ? 0 : d / max;
+
+            if (max == min)
+            {
+                h = 0; // achromatic
+            }
+            else
+            {
+                h = max switch
+                {
+                    _ when max == r => (g - b) / d + (g < b ? 6 : 0),
+                    _ when max == g => (b - r) / d + 2,
+                    _ when max == b => (r - g) / d + 4,
+                };
+                h /= 6;
+            }
+            return new(h, s, v);
+        }
+    }
+
+    public record struct HslColor(double H, double S, double L, double A = 0.0)
+    {
+        public override string ToString()
+        {
+            return $"HSL(h: {H}, s: {S}, l: {L}, a: {A})";
+        }
+
+        RgbColor ToRgb()
+        {
+            double r;
+            double g;
+            double b;
+
+            double h = TinyColor.Bound01(H, 360.0);
+            double s = TinyColor.Bound01(S * 100, 100.0);
+            double l = TinyColor.Bound01(L * 100, 100.0);
+
+            static double Hue2rgb(double p, double q, double t)
+            {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1 / 6) return p + (q - p) * 6 * t;
+                if (t < 1 / 2) return q;
+                if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+
+                return p;
+            }
+
+            if (S == 0)
+                r = g = b = l;
+            else
+            {
+                var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                var p = 2 * l - q;
+                r = Hue2rgb(p, q, h + 1 / 3);
+                g = Hue2rgb(p, q, h);
+                b = Hue2rgb(p, q, h - 1 / 3);
+            }
+
+            return new(r * 255, g * 255, b * 255);
+        }
+
+        static HslColor FromRgb(RgbColor color)
+        {
+            double r = TinyColor.Bound01(color.R, 255);
+            double g = TinyColor.Bound01(color.G, 255);
+            double b = TinyColor.Bound01(color.B, 255);
+
+            double max = new[] { r, g, b }.Max(), min = new[] { r, g, b }.Min();
+            double h, s, l = (max + min) / 2;
+
+            if (max == min)
+            {
+                h = s = 0; // achromatic
+            }
+            else
+            {
+                var d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                h = max switch
+                {
+                    _ when max == r => (g - b) / d + (g < b ? 6 : 0),
+                    _ when max == g => (b - r) / d + 2,
+                    _ when max == b => (r - g) / d + 4,
+                };
+
+                h /= 6;
+            }
+
+            return new(h, s, l);
+        }
     }
 
     public enum Theme
