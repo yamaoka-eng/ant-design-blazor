@@ -220,15 +220,20 @@ namespace AntDesign
             {
                 _duringManualInput = true;
             }
-
-            if (FormatAnalyzer.TryPickerStringConvert(args.Value.ToString(), out DateTime parsedValue, false))
+            
+            foreach (var formatAnalyzer in FormatAnalyzers)
             {
-                _pickerStatus[index].SelectedValue = parsedValue;
-                ChangePickerValue(parsedValue, index);
-            }
-            else
-            {
-                _pickerStatus[index].SelectedValue = null;
+                if (formatAnalyzer.TryPickerStringConvert(args.Value.ToString(), out DateTime parsedValue, false))
+                {
+                    _pickerStatus[index].SelectedValue = parsedValue;
+                    ChangePickerValue(parsedValue, index);
+                    
+                    break;
+                }
+                else
+                {
+                    _pickerStatus[index].SelectedValue = null;
+                }
             }
         }
 

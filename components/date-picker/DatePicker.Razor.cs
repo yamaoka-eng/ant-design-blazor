@@ -95,13 +95,18 @@ namespace AntDesign
                 _duringManualInput = true;
             }
 
-            if (FormatAnalyzer.TryPickerStringConvert(args.Value.ToString(), out TValue changeValue, IsNullable))
+            foreach (var formatAnalyzer in FormatAnalyzers)
             {
-                GetIfNotNull(changeValue, parsed =>
+                if (formatAnalyzer.TryPickerStringConvert(args.Value.ToString(), out TValue changeValue, IsNullable))
                 {
-                    _pickerStatus[0].SelectedValue = parsed;
-                    ChangePickerValue(parsed, index);
-                });
+                    GetIfNotNull(changeValue, parsed =>
+                    {
+                        _pickerStatus[0].SelectedValue = parsed;
+                        ChangePickerValue(parsed, index);
+                    });
+                    
+                    break;
+                }
             }
         }
 
