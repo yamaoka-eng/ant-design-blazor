@@ -5,10 +5,17 @@
 
 <p>Current count: @currentCount</p>
 
+
+<p>Init count: @initCount</p>
+
+<p>Render count: @renderCount</p>
+
 <Button Type="primary" @onclick="IncrementCount">Click me</Button>
 
 <br />
 <p @onclick="@(()=>GoTo($"/counter/{Id+1}"))">Go to @($"Counter {Id+1}")</p>
+
+
 
 
 @code {
@@ -17,6 +24,8 @@
     [Inject] private NavigationManager Navigation { get; set; }
 
     private int currentCount = 0;
+    private int renderCount = 0;
+    private int initCount = 0;
 
     public RenderFragment GetPageTitle() =>
     @<span>@($"Counter {Id}")</span>
@@ -32,4 +41,17 @@
         Navigation.NavigateTo(url);
     }
 
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        initCount++;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+
+        renderCount++;
+    }
 }

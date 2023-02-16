@@ -43,7 +43,7 @@ namespace AntDesign
             set => Navmgr.NavigateTo(value);
         }
 
-        private ReuseTabsPageItem[] Pages => _pageMap.Values.Where(x => !x.Ignore).OrderBy(x => x.CreatedAt).ToArray();
+        private ReuseTabsPageItem[] Pages => _pageMap.Values.Where(x => !x.Ignore && x.IsOpen).OrderBy(x => x.CreatedAt).ToArray();
 
         public ReuseTabs()
         {
@@ -59,6 +59,7 @@ namespace AntDesign
             ReuseTabsService.OnCloseAll += RemoveAll;
             ReuseTabsService.OnCloseCurrent += RemoveCurrent;
             ReuseTabsService.OnUpdate += UpdateState;
+            ReuseTabsService.OnReload += Reload;
         }
 
         protected override void Dispose(bool disposing)
@@ -70,6 +71,7 @@ namespace AntDesign
             ReuseTabsService.OnCloseAll -= RemoveAll;
             ReuseTabsService.OnCloseCurrent -= RemoveCurrent;
             ReuseTabsService.OnUpdate -= UpdateState;
+            ReuseTabsService.OnReload -= Reload;
 
             base.Dispose(disposing);
         }
@@ -91,6 +93,7 @@ namespace AntDesign
                     _pageMap[CurrentUrl] = reuseTabsPageItem;
                 }
 
+                reuseTabsPageItem.IsOpen = true;
                 reuseTabsPageItem.Body ??= CreateBody(routeData, reuseTabsPageItem);
             }
 
@@ -145,7 +148,7 @@ namespace AntDesign
         /// 获取所有程序集
         /// </summary>
         /// <returns></returns>
-        protected IEnumerable<Assembly> GetAllAssembly()
+        private IEnumerable<Assembly> GetAllAssembly()
         {
             IEnumerable<Assembly> assemblies = new List<Assembly>();
             var entryAssembly = Assembly.GetEntryAssembly();
@@ -182,7 +185,7 @@ namespace AntDesign
             }
         }
 
-        public void AddReuseTabsPageItem(string url, Type pageType)
+        private void AddReuseTabsPageItem(string url, Type pageType)
         {
             url = this.GetNewKeyByUrl(url);
 
@@ -230,6 +233,14 @@ namespace AntDesign
             RemovePage(this.CurrentUrl);
         }
 
+        private void Reload()
+        {
+            var currentUrl = CurrentUrl;
+            var pageItem = _pageMap[currentUrl];
+            pageItem.IsOpen = false;
+            CurrentUrl = currentUrl;
+        }
+
         private void UpdateState()
         {
             StateHasChanged();
@@ -240,12 +251,12 @@ namespace AntDesign
             return GetNewKeyByUrlBase(url);
         }
 
-        public void RemovePageBase(string key)
+        private void RemovePageBase(string key)
         {
             _pageMap.Remove(key);
         }
 
-        public void RemovePageWithRegex(string pattern)
+        private void RemovePageWithRegex(string pattern)
         {
             foreach (var key in _pageMap.Keys)
             {
@@ -256,7 +267,7 @@ namespace AntDesign
             }
         }
 
-        public string GetNewKeyByUrlBase(string url)
+        private string GetNewKeyByUrlBase(string url)
         {
             if (url.StartsWith("/"))
             {

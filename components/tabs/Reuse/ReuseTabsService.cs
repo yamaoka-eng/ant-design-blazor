@@ -23,6 +23,8 @@ namespace AntDesign
 
         internal event Func<string, string> GetNewKeyByUrl;
 
+        internal event Action OnReload;
+
         public void ClosePage(string key)
         {
             OnClosePage?.Invoke(GetNewKeyByUrl?.Invoke(key));
@@ -41,6 +43,11 @@ namespace AntDesign
         public void CloseCurrent()
         {
             OnCloseCurrent?.Invoke();
+        }
+
+        public void Reload()
+        {
+            OnReload?.Invoke();
         }
 
         public void Update()

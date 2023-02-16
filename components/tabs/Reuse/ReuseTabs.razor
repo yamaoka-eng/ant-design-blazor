@@ -1,21 +1,17 @@
 ﻿@namespace AntDesign
 @inherits AntDomComponentBase
-@inject NavigationManager _navigationManager
 
-@if (Pages?.Any() != true)
-{
-
-}
-else
-{
-    <Tabs Class="@Class" Style="@Style" Id="@Id" HideAdd Type="@TabType.EditableCard" @bind-ActiveKey="@CurrentUrl" OnClose="RemovePage" Draggable="Draggable" Size="Size">
+@CurrentUrl
+<Tabs Class="@Class" Style="@Style" Id="@Id" HideAdd Type="@TabType.EditableCard" @bind-ActiveKey="@CurrentUrl" OnClose="RemovePage" Draggable="Draggable" Size="Size">
+    @if (Pages?.Any() == true)
+    {
         @foreach (var item in Pages)
         {
             <TabPane @key="@item.Url" Key="@item.Url" Class="@TabPaneClass" Closable="item.Closable" ForceRender>
                 <TabTemplate>
                     @item.Title
                 </TabTemplate>
-               <ChildContent>
+                <ChildContent>
                     @if (Body != null)
                     {
                         @Body(item)
@@ -24,11 +20,13 @@ else
                     {
                         @item.Body
                     }
-               </ChildContent>
+                </ChildContent>
                 <TabContextMenu>
                     <Menu>
+                        <MenuItem OnClick="Reload">@Locale.Reload</MenuItem>
                         <MenuItem Disabled="!item.Closable" OnClick="@(()=>{RemovePage(item.Url);})">@Locale.Close</MenuItem>
                         <MenuItem OnClick="RemoveAll">@Locale.CloseAllTabs</MenuItem>
+                        <MenuItem OnClick="@(()=>{ RemoveOther(item.Url);})">@Locale.CloseAllButThis</MenuItem>
                         <MenuItem OnClick="@(()=>{ RemoveOther(item.Url);})">@Locale.CloseAllButThis</MenuItem>
                         @*         <MenuDivider />
                 <MenuItem>@Locale.PinTab</MenuItem>*@
@@ -36,5 +34,5 @@ else
                 </TabContextMenu>
             </TabPane>
         }
-    </Tabs>
-}
+    }
+</Tabs>
