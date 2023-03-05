@@ -379,10 +379,10 @@ namespace AntDesign
                 await OnTabClick.InvokeAsync(tabPane.Key);
             }
 
-            ActivatePane(tabPane.Key);
+            await ActivatePane(tabPane.Key);
         }
 
-        private void ActivatePane(string key)
+        private async Task ActivatePane(string key)
         {
             if (_panes.Count == 0)
                 return;
@@ -401,11 +401,14 @@ namespace AntDesign
                 return;
             }
 
-            _activePane?.SetActive(false);
-            _activeTab?.SetActive(false);
+            if (_activeTab != null)
+            {
+                _ = _activeTab?.SetActive(false);
+                _ = _activePane?.SetActive(false);
+            }
 
-            tab.SetActive(true);
-            tabPane.SetActive(true);
+            _ = tab.SetActive(true);
+            _ = tabPane.SetActive(true);
 
             _activeTab = tab;
             _activePane = tabPane;
@@ -414,12 +417,12 @@ namespace AntDesign
             {
                 if (ActiveKeyChanged.HasDelegate)
                 {
-                    ActiveKeyChanged.InvokeAsync(_activePane.Key);
+                    await ActiveKeyChanged.InvokeAsync(_activePane.Key);
                 }
 
                 if (OnChange.HasDelegate)
                 {
-                    OnChange.InvokeAsync(_activePane.Key);
+                    await OnChange.InvokeAsync(_activePane.Key);
                 }
 
                 _activeKey = _activePane.Key;
@@ -432,7 +435,6 @@ namespace AntDesign
             _needUpdateScrollListPosition = true;
 
             _shouldRender = true;
-            StateHasChanged();
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
