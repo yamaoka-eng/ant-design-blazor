@@ -63,7 +63,7 @@ namespace AntDesign
         private ClassMapper _tabPaneClassMapper = new();
 
         private const string PrefixCls = "ant-tabs-tab";
-        private const string tabPanePrefixCls = "ant-tabs-tabpane";
+        private const string TabPanePrefixCls = "ant-tabs-tabpane";
 
         private ElementReference _tabRef;
         private bool _isActive;
@@ -101,9 +101,9 @@ namespace AntDesign
                 .If($"{PrefixCls}-disabled", () => Disabled);
 
             _tabPaneClassMapper
-                .Add(tabPanePrefixCls)
-                .If($"{tabPanePrefixCls}-active", () => _isActive)
-                .If($"{tabPanePrefixCls}-hidden", () => !_isActive)
+                .Add(TabPanePrefixCls)
+                .If($"{TabPanePrefixCls}-active", () => _isActive)
+                .If($"{TabPanePrefixCls}-hidden", () => !_isActive)
                 .If("ant-tabs-switch-leave ant-tabs-switch-leave-prepare ant-tabs-switch", () => _hidding == 1)
                 .If("ant-tabs-switch-leave ant-tabs-switch-leave-start ant-tabs-switch", () => _hidding == 2)
                 .If("ant-tabs-switch-leave ant-tabs-switch-leave-active ant-tabs-switch", () => _hidding == 3)
@@ -118,55 +118,55 @@ namespace AntDesign
             Key = key;
         }
 
-        internal async Task SetActive(bool isActive)
+        internal void SetActive(bool isActive)
         {
             if (_isActive == isActive)
             {
                 return;
             }
 
-            if (IsPane && Parent?.Animated == true)
-            {
-                if (isActive)
-                {
-                    _showing = 1;
+            //if (IsPane && Parent?.Animated == true)
+            //{
+            //    if (isActive)
+            //    {
+            //        _showing = 1;
 
-                    StateHasChanged();
-                    await Task.Delay(300);
+            //        StateHasChanged();
+            //        await Task.Delay(300);
 
-                    _showing = 2;
-                    _isActive = true;
+            //        _showing = 2;
+            //        _isActive = true;
 
-                    StateHasChanged();
-                    await Task.Delay(300);
+            //        StateHasChanged();
+            //        await Task.Delay(300);
 
-                    _showing = 3;
-                    StateHasChanged();
-                    await Task.Delay(300);
-                }
-                else
-                {
-                    _hidding = 1;
+            //        _showing = 3;
+            //        StateHasChanged();
+            //        await Task.Delay(300);
+            //    }
+            //    else
+            //    {
+            //        _hidding = 1;
 
-                    StateHasChanged();
-                    await Task.Delay(300);
+            //        StateHasChanged();
+            //        await Task.Delay(300);
 
-                    _hidding = 2;
-                    _isActive = false;
+            //        _hidding = 2;
+            //        _isActive = false;
 
-                    StateHasChanged();
-                    await Task.Delay(300);
+            //        StateHasChanged();
+            //        await Task.Delay(300);
 
-                    _showing = 3;
-                    StateHasChanged();
-                    await Task.Delay(300);
-                }
-            }
+            //        _showing = 3;
+            //        StateHasChanged();
+            //        await Task.Delay(300);
+            //    }
+            //}
 
             _showing = 0;
             _hidding = 0;
             _isActive = isActive;
-            await InvokeAsync(StateHasChanged);
+            //await InvokeAsync(StateHasChanged);
         }
 
         internal void Close()

@@ -183,8 +183,6 @@ namespace AntDesign
         private bool _shouldRender;
         private bool _afterFirstRender;
 
-        private string _contentAnimatedStyle;
-
         private readonly ClassMapper _inkClassMapper = new ClassMapper();
         private readonly ClassMapper _contentClassMapper = new ClassMapper();
         private readonly ClassMapper _tabsNavWarpPingClassMapper = new ClassMapper();
@@ -379,10 +377,10 @@ namespace AntDesign
                 await OnTabClick.InvokeAsync(tabPane.Key);
             }
 
-            await ActivatePane(tabPane.Key);
+            ActivatePane(tabPane.Key);
         }
 
-        private async Task ActivatePane(string key)
+        private void ActivatePane(string key)
         {
             if (_panes.Count == 0)
                 return;
@@ -403,12 +401,12 @@ namespace AntDesign
 
             if (_activeTab != null)
             {
-                _ = _activeTab?.SetActive(false);
-                _ = _activePane?.SetActive(false);
+                _activeTab?.SetActive(false);
+                _activePane?.SetActive(false);
             }
 
-            _ = tab.SetActive(true);
-            _ = tabPane.SetActive(true);
+            tab.SetActive(true);
+            tabPane.SetActive(true);
 
             _activeTab = tab;
             _activePane = tabPane;
@@ -417,24 +415,24 @@ namespace AntDesign
             {
                 if (ActiveKeyChanged.HasDelegate)
                 {
-                    await ActiveKeyChanged.InvokeAsync(_activePane.Key);
+                    ActiveKeyChanged.InvokeAsync(_activePane.Key);
                 }
 
                 if (OnChange.HasDelegate)
                 {
-                    await OnChange.InvokeAsync(_activePane.Key);
+                    OnChange.InvokeAsync(_activePane.Key);
                 }
 
                 _activeKey = _activePane.Key;
             }
-
-            _contentAnimatedStyle = Animated && tabIndex > 0 ? $"margin-left: -{tabIndex * 100}%" : "";
 
             Card?.SetBody(_activePane.ChildContent);
 
             _needUpdateScrollListPosition = true;
 
             _shouldRender = true;
+
+            InvokeStateHasChanged();
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
